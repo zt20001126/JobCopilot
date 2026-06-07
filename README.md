@@ -108,6 +108,7 @@ python -m pytest
 | 变量 | 说明 |
 | --- | --- |
 | `VITE_API_BASE_URL` | 后端 API 地址，本地默认 `http://localhost:8000` |
+| `VITE_API_TIMEOUT_MS` | 插件请求超时时间，默认 `10000` 毫秒 |
 
 ### 后端
 

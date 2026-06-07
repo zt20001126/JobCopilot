@@ -2,7 +2,8 @@
   "manifest_version": 3,
   "name": "JobCopilot - AI 求职副驾驶",
   "description": "读取岗位信息并生成针对性的求职招呼语。",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "minimum_chrome_version": "114",
   "action": {
     "default_title": "JobCopilot",
     "default_popup": "src/popup/index.html"
@@ -23,7 +24,6 @@
     }
   ],
   "permissions": [
-    "activeTab",
     "sidePanel"
   ],
   "host_permissions": [

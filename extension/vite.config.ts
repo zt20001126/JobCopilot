@@ -29,10 +29,10 @@ export default defineConfig(({ mode }) => {
           const manifest = JSON.parse(
             readFileSync(resolve(rootDir, "manifest.json"), "utf-8"),
           ) as { host_permissions: string[] };
-          manifest.host_permissions = [
-            ...manifest.host_permissions,
-            apiPermission,
-          ];
+          // 使用 Set 去重，避免后端域名与已有站点权限重复。
+          manifest.host_permissions = Array.from(
+            new Set([...manifest.host_permissions, apiPermission]),
+          );
 
           mkdirSync(resolve(rootDir, "dist"), { recursive: true });
           writeFileSync(

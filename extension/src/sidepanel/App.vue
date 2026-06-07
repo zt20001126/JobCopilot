@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import type {
+  ExtensionMessage,
   ExtensionMessageResponse,
   GreetingResponse,
   JobInfo,
@@ -8,8 +9,10 @@ import type {
 
 const jobInfo = ref<JobInfo | null>(null);
 const result = ref<GreetingResponse | null>(null);
+const readingJob = ref(false);
 const loading = ref(false);
 const errorMessage = ref("");
+const successMessage = ref("");
 const copiedKey = ref("");
 
 const greetingItems = computed(() => {
@@ -33,15 +36,22 @@ const greetingItems = computed(() => {
 });
 
 async function loadJobInfo(): Promise<void> {
+  readingJob.value = true;
   errorMessage.value = "";
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab.id) {
-    errorMessage.value = "未找到当前标签页";
-    return;
-  }
+  successMessage.value = "";
 
   try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (!tab.id) {
+      errorMessage.value = "未找到当前标签页";
+      jobInfo.value = null;
+      result.value = null;
+      return;
+    }
+
     const response = await chrome.tabs.sendMessage<
       { type: "GET_JOB_INFO" },
       ExtensionMessageResponse<JobInfo | null>
@@ -49,10 +59,15 @@ async function loadJobInfo(): Promise<void> {
     jobInfo.value = response.data ?? null;
 
     if (!jobInfo.value) {
+      result.value = null;
       errorMessage.value = "暂未识别到岗位信息，请打开 Boss直聘岗位详情页";
     }
   } catch {
+    jobInfo.value = null;
+    result.value = null;
     errorMessage.value = "当前页面未加载 JobCopilot 内容脚本";
+  } finally {
+    readingJob.value = false;
   }
 }
 
@@ -63,44 +78,88 @@ async function generate(): Promise<void> {
 
   loading.value = true;
   errorMessage.value = "";
+  successMessage.value = "";
 
-  const response = await chrome.runtime.sendMessage<
-    {
-      type: "GENERATE_GREETING";
+  try {
+    const response = await chrome.runtime.sendMessage<
+      {
+        type: "GENERATE_GREETING";
+        payload: {
+          position_title: string;
+          job_description: string;
+          job_url: string;
+        };
+      },
+      ExtensionMessageResponse<GreetingResponse>
+    >({
+      type: "GENERATE_GREETING",
       payload: {
-        position_title: string;
-        job_description: string;
-        job_url: string;
-      };
-    },
-    ExtensionMessageResponse<GreetingResponse>
-  >({
-    type: "GENERATE_GREETING",
-    payload: {
-      position_title: jobInfo.value.positionTitle,
-      job_description: jobInfo.value.jobDescription,
-      job_url: jobInfo.value.jobUrl,
-    },
-  });
+        position_title: jobInfo.value.positionTitle,
+        job_description: jobInfo.value.jobDescription,
+        job_url: jobInfo.value.jobUrl,
+      },
+    });
 
-  loading.value = false;
-  if (!response.ok || !response.data) {
-    errorMessage.value = response.error ?? "生成失败，请稍后重试";
-    return;
+    if (!response?.ok || !response.data) {
+      errorMessage.value = response?.error ?? "生成失败，请稍后重试";
+      return;
+    }
+
+    result.value = response.data;
+    successMessage.value = "已生成 3 条招呼语";
+  } catch {
+    errorMessage.value = "插件通信失败，请重新加载插件后重试";
+  } finally {
+    loading.value = false;
   }
-
-  result.value = response.data;
 }
 
 async function copyGreeting(key: string, content: string): Promise<void> {
-  await navigator.clipboard.writeText(content);
-  copiedKey.value = key;
-  window.setTimeout(() => {
-    copiedKey.value = "";
-  }, 1200);
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  try {
+    await navigator.clipboard.writeText(content);
+    copiedKey.value = key;
+    successMessage.value = "招呼语已复制";
+    window.setTimeout(() => {
+      copiedKey.value = "";
+      successMessage.value = "";
+    }, 1200);
+  } catch {
+    errorMessage.value = "复制失败，请检查浏览器剪贴板权限";
+  }
 }
 
-onMounted(loadJobInfo);
+function handleJobInfoUpdated(message: ExtensionMessage): void {
+  if (message.type !== "JOB_INFO_UPDATED") {
+    return;
+  }
+
+  const hasJobChanged =
+    jobInfo.value?.jobUrl !== message.payload?.jobUrl ||
+    jobInfo.value?.positionTitle !== message.payload?.positionTitle ||
+    jobInfo.value?.jobDescription !== message.payload?.jobDescription;
+  jobInfo.value = message.payload;
+  errorMessage.value = message.payload
+    ? ""
+    : "当前页面不是可识别的 Boss直聘岗位详情页";
+
+  if (hasJobChanged) {
+    // 岗位切换后清空旧结果，防止用户误复制上一岗位内容。
+    result.value = null;
+    successMessage.value = "";
+  }
+}
+
+onMounted(() => {
+  chrome.runtime.onMessage.addListener(handleJobInfoUpdated);
+  void loadJobInfo();
+});
+
+onUnmounted(() => {
+  chrome.runtime.onMessage.removeListener(handleJobInfoUpdated);
+});
 </script>
 
 <template>
@@ -112,13 +171,21 @@ onMounted(loadJobInfo);
 
     <section class="job-card">
       <span>当前岗位</span>
-      <strong>{{ jobInfo?.positionTitle || "等待识别" }}</strong>
-      <button class="link-button" type="button" @click="loadJobInfo">
-        重新读取
+      <strong>
+        {{ jobInfo?.positionTitle || (readingJob ? "正在识别..." : "等待识别") }}
+      </strong>
+      <button
+        class="link-button"
+        type="button"
+        :disabled="readingJob"
+        @click="loadJobInfo"
+      >
+        {{ readingJob ? "读取中..." : "重新读取" }}
       </button>
     </section>
 
     <p v-if="errorMessage" class="message error">{{ errorMessage }}</p>
+    <p v-if="successMessage" class="message success">{{ successMessage }}</p>
 
     <button
       class="primary-button"
@@ -126,7 +193,7 @@ onMounted(loadJobInfo);
       :disabled="!jobInfo || loading"
       @click="generate"
     >
-      {{ loading ? "正在生成..." : "AI 生成招呼语" }}
+      {{ loading ? "正在生成..." : result ? "重新生成" : "AI 生成招呼语" }}
     </button>
 
     <section class="results" aria-live="polite">
@@ -241,6 +308,11 @@ h1 {
 .error {
   background: #fff0f0;
   color: #a63131;
+}
+
+.success {
+  background: #edf8f0;
+  color: #287a42;
 }
 
 .results {
