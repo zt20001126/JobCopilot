@@ -19,7 +19,8 @@ const BOSS_SELECTORS: PlatformSelectors = {
 
 function readFirstText(selectors: string[]): string {
   for (const selector of selectors) {
-    const text = document.querySelector<HTMLElement>(selector)?.innerText.trim();
+    const element = document.querySelector<HTMLElement>(selector);
+    const text = (element?.innerText ?? element?.textContent ?? "").trim();
     if (text) {
       return text;
     }

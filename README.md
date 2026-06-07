@@ -14,9 +14,10 @@ JobCopilot（AI 求职副驾驶）是一个浏览器插件项目。MVP 面向 Bo
 
 ```text
 JobCopilot/
-├── docs/                         # PRD 与 TDD
+├── docs/                         # PRD、TDD 与 TODO
 ├── extension/
 │   ├── manifest.json             # Manifest V3 配置
+│   ├── tests/                    # 插件端自动化测试
 │   ├── src/
 │   │   ├── api/                  # 后端 API 封装
 │   │   ├── background/           # Service Worker
@@ -34,7 +35,9 @@ JobCopilot/
     │   ├── schemas/              # 请求与响应模型
     │   ├── services/             # 业务与 AI 服务
     │   └── utils/                # 通用工具
+    ├── tests/                    # 后端 API 测试
     ├── requirements.txt
+    ├── requirements-dev.txt
     └── .env.example
 ```
 
@@ -78,6 +81,25 @@ python -m uvicorn app.main:app --reload
 - 生成接口：`POST http://localhost:8000/api/v1/greeting/generate`
 
 更多后端说明见 [backend/README.md](backend/README.md)。
+
+## 运行测试
+
+插件端：
+
+```powershell
+cd extension
+npm install
+npm test
+```
+
+后端：
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+python -m pytest
+```
 
 ## 环境变量
 

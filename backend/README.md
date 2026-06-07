@@ -7,12 +7,20 @@ FastAPI 后端负责参数校验、招呼语生成流程编排、AI 服务调用
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
 Copy-Item .env.example .env
 python -m uvicorn app.main:app --reload
 ```
 
 服务默认运行在 `http://localhost:8000`。
+
+## 运行测试
+
+```powershell
+python -m pytest
+```
+
+测试默认不调用 DeepSeek API，当前覆盖基础健康检查接口。
 
 ## 环境配置
 
