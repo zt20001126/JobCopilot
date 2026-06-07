@@ -27,12 +27,17 @@ async function readErrorMessage(response: Response): Promise<string> {
       detail?: unknown;
       message?: unknown;
       error?: unknown;
+      request_id?: unknown;
     };
     const candidates = [payload.message, payload.detail, payload.error];
-    return (
+    const message =
       candidates.find((value): value is string => typeof value === "string") ??
-      ""
-    );
+      "";
+    const requestId =
+      typeof payload.request_id === "string" ? payload.request_id : "";
+    return message && requestId
+      ? `${message}（请求：${requestId.slice(0, 8)}）`
+      : message;
   } catch {
     return "";
   }

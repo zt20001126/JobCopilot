@@ -8,13 +8,13 @@ JobCopilot（AI 求职副驾驶）是一个浏览器插件项目。MVP 面向 Bo
 
 - 插件端：TypeScript、Vue 3、Vite、Chrome Extension Manifest V3
 - 后端：Python、FastAPI、SQLAlchemy、SQLite
-- AI 服务：DeepSeek API（预留接口）
+- AI 服务：DeepSeek API
 
 ## 项目结构
 
 ```text
 JobCopilot/
-├── docs/                         # PRD、TDD 与 TODO
+├── docs/                         # PRD、TDD、TODO、隐私与验收记录
 ├── extension/
 │   ├── manifest.json             # Manifest V3 配置
 │   ├── tests/                    # 插件端自动化测试
@@ -82,6 +82,8 @@ python -m uvicorn app.main:app --reload
 - 生成接口：`POST http://localhost:8000/api/v1/greeting/generate`
 
 更多后端说明见 [backend/README.md](backend/README.md)。
+
+隐私边界见 [docs/privacy-jobcopilot.md](docs/privacy-jobcopilot.md)，阶段四验证记录见 [docs/phase4-validation.md](docs/phase4-validation.md)。
 
 ## 运行测试
 

@@ -79,6 +79,8 @@ async function generate(): Promise<void> {
   loading.value = true;
   errorMessage.value = "";
   successMessage.value = "";
+  // 新请求开始后立即清空旧结果，避免失败时误复制上一轮内容。
+  result.value = null;
 
   try {
     const response = await chrome.runtime.sendMessage<
@@ -199,7 +201,7 @@ onUnmounted(() => {
       :disabled="!jobInfo || loading"
       @click="generate"
     >
-      {{ loading ? "正在生成..." : result ? "重新生成" : "AI 生成招呼语" }}
+      {{ loading ? "正在生成..." : result ? "重新生成" : errorMessage ? "重试生成" : "AI 生成招呼语" }}
     </button>
 
     <section class="results" aria-live="polite">
@@ -216,7 +218,7 @@ onUnmounted(() => {
       </article>
 
       <p v-if="!result && !loading" class="empty">
-        生成结果将在这里展示。
+        {{ errorMessage ? "修复问题后可点击“重试生成”。" : "生成结果将在这里展示。" }}
       </p>
     </section>
   </main>

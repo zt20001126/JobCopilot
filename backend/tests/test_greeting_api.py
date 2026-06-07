@@ -70,3 +70,27 @@ async def test_generate_greeting_returns_structured_validation_error() -> None:
 
     assert response.status_code == 422
     assert response.json()["error_code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.asyncio
+async def test_generate_greeting_rejects_configured_input_limit(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(get_settings(), "max_job_description_length", 20)
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(
+        transport=transport,
+        base_url="http://test",
+    ) as client:
+        response = await client.post(
+            "/api/v1/greeting/generate",
+            json={
+                "position_title": "Python 后端工程师",
+                "job_description": "负责 FastAPI 接口、数据库开发、维护和性能优化工作。",
+            },
+        )
+
+    assert response.status_code == 413
+    body = response.json()
+    assert body["error_code"] == "JOB_DESCRIPTION_TOO_LONG"
+    assert body["request_id"]

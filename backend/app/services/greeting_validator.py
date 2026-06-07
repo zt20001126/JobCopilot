@@ -12,9 +12,14 @@ UNVERIFIED_CLAIM_PATTERN = re.compile(
     r"|我的(?:经验|经历|技能|能力)"
     r"|能够胜任",
 )
+TECH_KEYWORD_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9.+#-]{1,}")
 
 
-def validate_greeting_output(payload: object) -> GreetingResponse:
+def validate_greeting_output(
+    payload: object,
+    *,
+    job_context: str | None = None,
+) -> GreetingResponse:
     """校验模型结构、字段完整性和单条字数。"""
     try:
         result = GreetingResponse.model_validate(payload)
@@ -32,6 +37,15 @@ def validate_greeting_output(payload: object) -> GreetingResponse:
     if len(set(normalized)) != len(normalized):
         raise AIOutputError()
     if any(UNVERIFIED_CLAIM_PATTERN.search(value) for value in normalized):
+        raise AIOutputError()
+    technical_keywords = {
+        keyword.lower()
+        for keyword in TECH_KEYWORD_PATTERN.findall(job_context or "")
+    }
+    if technical_keywords and any(
+        not any(keyword in value.lower() for keyword in technical_keywords)
+        for value in normalized
+    ):
         raise AIOutputError()
 
     return GreetingResponse(

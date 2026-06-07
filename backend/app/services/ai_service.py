@@ -67,7 +67,13 @@ class AIService:
                     response_body = response.json()
                     content = response_body["choices"][0]["message"]["content"]
                     model_payload = json.loads(content)
-                    return validate_greeting_output(model_payload)
+                    return validate_greeting_output(
+                        model_payload,
+                        job_context=(
+                            f"{payload.position_title} "
+                            f"{payload.job_description}"
+                        ),
+                    )
                 except (
                     KeyError,
                     IndexError,

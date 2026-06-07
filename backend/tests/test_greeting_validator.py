@@ -30,3 +30,15 @@ def test_validate_greeting_output_rejects_unverified_experience_claims() -> None
             "professional_version": "专业版",
             "high_reply_version": "高回复率版",
         })
+
+
+def test_validate_greeting_output_rejects_irrelevant_technical_content() -> None:
+    with pytest.raises(AIOutputError):
+        validate_greeting_output(
+            {
+                "simple_version": "您好，想进一步了解岗位情况。",
+                "professional_version": "您好，想请教团队当前的业务重点。",
+                "high_reply_version": "请问这个岗位目前主要负责新功能还是维护？",
+            },
+            job_context="负责 FastAPI 和 PostgreSQL 服务开发。",
+        )

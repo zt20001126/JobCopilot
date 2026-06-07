@@ -42,7 +42,10 @@ describe("generateGreeting", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ detail: "岗位描述无效" }), {
+        new Response(JSON.stringify({
+          message: "岗位描述无效",
+          request_id: "12345678-abcd",
+        }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
         }),
@@ -53,7 +56,7 @@ describe("generateGreeting", () => {
     await expect(generateGreeting(payload)).rejects.toMatchObject({
       code: "HTTP",
       status: 400,
-      message: "岗位描述无效",
+      message: "岗位描述无效（请求：12345678）",
     });
   });
 
@@ -92,6 +95,16 @@ describe("generateGreeting", () => {
     await expect(generateGreeting(payload)).rejects.toMatchObject({
       code: "TIMEOUT",
       message: "请求超时，请稍后重试",
+    });
+  });
+
+  it("后端离线时返回网络错误", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
+    const { generateGreeting } = await loadApiModule();
+
+    await expect(generateGreeting(payload)).rejects.toMatchObject({
+      code: "NETWORK",
+      message: "无法连接后端服务，请检查服务是否启动",
     });
   });
 });
