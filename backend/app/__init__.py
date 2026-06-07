@@ -1,0 +1,1 @@
+"""JobCopilot backend application package."""
