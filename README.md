@@ -2,7 +2,7 @@
 
 JobCopilot（AI 求职副驾驶）是一个浏览器插件项目。MVP 面向 Boss直聘岗位详情页，提供岗位信息读取、AI 招呼语生成和一键复制能力。
 
-当前仓库为基础代码框架，后端默认返回 mock 数据，尚未接入真实 DeepSeek API。
+当前已完成插件 MVP 与 DeepSeek V4 后端接入。
 
 ## 技术栈
 
@@ -71,6 +71,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 Copy-Item .env.example .env
+python -m alembic upgrade head
 python -m uvicorn app.main:app --reload
 ```
 
@@ -120,6 +121,9 @@ python -m pytest
 | `DEEPSEEK_BASE_URL` | DeepSeek API 地址 |
 | `DEEPSEEK_MODEL` | 使用的模型名称 |
 | `REQUEST_TIMEOUT_SECONDS` | 外部 AI 请求超时时间 |
+| `MAX_JOB_DESCRIPTION_LENGTH` | JD 最大允许长度 |
+| `RATE_LIMIT_REQUESTS` | 限流窗口内允许的请求数 |
+| `RATE_LIMIT_WINDOW_SECONDS` | 限流窗口秒数 |
 | `STORE_JOB_DESCRIPTION` | 是否保存完整 JD，默认关闭 |
 | `CORS_ORIGINS` | 允许的普通 Web 来源 |
 | `CORS_ORIGIN_REGEX` | 允许的浏览器插件来源规则 |
@@ -128,6 +132,5 @@ python -m pytest
 
 ## 当前限制
 
-- Boss直聘 DOM 选择器仅为集中式占位配置，需要结合真实页面验证。
-- DeepSeek 调用尚未实现，后端默认使用 mock 数据。
-- 暂未实现登录、限流、简历分析、批量任务和多平台适配。
+- MVP 限流基于单进程内存，多实例部署时需改为 Redis。
+- 暂未实现登录、简历分析、批量任务和多平台适配。

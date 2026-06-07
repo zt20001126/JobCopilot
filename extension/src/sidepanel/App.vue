@@ -186,6 +186,12 @@ onUnmounted(() => {
 
     <p v-if="errorMessage" class="message error">{{ errorMessage }}</p>
     <p v-if="successMessage" class="message success">{{ successMessage }}</p>
+    <p v-if="result?.model_name" class="generation-meta">
+      模型：{{ result.model_name }}
+      <template v-if="result.request_id">
+        · 请求：{{ result.request_id.slice(0, 8) }}
+      </template>
+    </p>
 
     <button
       class="primary-button"
@@ -313,6 +319,12 @@ h1 {
 .success {
   background: #edf8f0;
   color: #287a42;
+}
+
+.generation-meta {
+  margin: 8px 0 0;
+  color: #7a8398;
+  font-size: 12px;
 }
 
 .results {

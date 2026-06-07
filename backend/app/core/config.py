@@ -20,8 +20,11 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./jobcopilot.db"
     deepseek_api_key: str | None = None
     deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = "deepseek-v4-flash"
     request_timeout_seconds: float = 10.0
+    max_job_description_length: int = 20_000
+    rate_limit_requests: int = 10
+    rate_limit_window_seconds: int = 60
     enable_mock_ai: bool = True
     store_job_description: bool = False
 

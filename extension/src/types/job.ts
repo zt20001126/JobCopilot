@@ -22,6 +22,9 @@ export interface GreetingResponse {
   simple_version: string;
   professional_version: string;
   high_reply_version: string;
+  request_id?: string;
+  generated_at?: string;
+  model_name?: string;
 }
 
 export type ExtensionMessage =
